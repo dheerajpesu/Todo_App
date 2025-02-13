@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
-import { Task as TaskType, type Task, type InsertTask } from "@shared/schema";
+import { Task as TaskType, type InsertTask } from "@shared/schema";
 import { startOfDay } from "date-fns";
 
 export interface IStorage {
-  getTasks(): Promise<TaskType[]>;
-  createTask(task: InsertTask): Promise<TaskType>;
-  updateTask(id: string, completed: boolean): Promise<TaskType | null>;
+  getTasks(): Promise<typeof TaskType[]>;
+  createTask(task: InsertTask): Promise<typeof TaskType>;
+  updateTask(id: string, completed: boolean): Promise<typeof TaskType | null>;
   deleteTask(id: string): Promise<boolean>;
   resetFixedTasks(): Promise<void>;
 }
@@ -13,8 +13,12 @@ export interface IStorage {
 export class MongoStorage implements IStorage {
   constructor() {
     // Connect to MongoDB with better error handling
-    mongoose.connect('mongodb://localhost:27017/todoapp', {
+    const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://0.0.0.0:27017/todoapp';
+
+    mongoose.connect(MONGODB_URL, {
       serverSelectionTimeoutMS: 5000, // 5 seconds timeout
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
     }).then(() => {
       console.log('✅ Connected to MongoDB successfully');
     }).catch(err => {
@@ -33,11 +37,11 @@ export class MongoStorage implements IStorage {
     });
   }
 
-  async getTasks(): Promise<TaskType[]> {
+  async getTasks(): Promise<typeof TaskType[]> {
     return await TaskType.find().sort({ lastReset: -1 });
   }
 
-  async createTask(insertTask: InsertTask): Promise<TaskType> {
+  async createTask(insertTask: InsertTask): Promise<typeof TaskType> {
     const task = new TaskType({
       ...insertTask,
       lastReset: new Date()
@@ -45,7 +49,7 @@ export class MongoStorage implements IStorage {
     return await task.save();
   }
 
-  async updateTask(id: string, completed: boolean): Promise<TaskType | null> {
+  async updateTask(id: string, completed: boolean): Promise<typeof TaskType | null> {
     return await TaskType.findByIdAndUpdate(
       id,
       { completed },

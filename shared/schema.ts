@@ -19,8 +19,10 @@ const taskSchema = new mongoose.Schema({
 });
 
 export const Task = mongoose.model('Task', taskSchema);
+
+// Export the document type for TypeScript
 export type TaskType = mongoose.Document & {
-  id: string;
+  _id: string;
   title: string;
   completed: boolean;
   isFixed: boolean;
