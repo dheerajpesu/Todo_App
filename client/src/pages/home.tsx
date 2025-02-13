@@ -5,9 +5,9 @@ import TaskList from "@/components/tasks/task-list";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 bg-gradient-to-b from-slate-50 to-slate-100 p-4 md:p-8">
       <div className="mx-auto max-w-3xl">
-        <Card className="mb-8">
+        <Card className="mb-8 shadow-md">
           <CardHeader>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Daily Task Manager
@@ -24,7 +24,7 @@ export default function Home() {
             <TabsTrigger value="fixed">Fixed Tasks</TabsTrigger>
             <TabsTrigger value="variable">Variable Tasks</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="all">
             <TaskList filter="all" />
           </TabsContent>
