@@ -1,56 +1,78 @@
 import mongoose from 'mongoose';
-import { Task as TaskType, type InsertTask } from "@shared/schema";
+import { Task, type InsertTask } from "@shared/schema";
 import { startOfDay } from "date-fns";
 
 export interface IStorage {
-  getTasks(): Promise<typeof TaskType[]>;
-  createTask(task: InsertTask): Promise<typeof TaskType>;
-  updateTask(id: string, completed: boolean): Promise<typeof TaskType | null>;
+  getTasks(): Promise<any[]>;
+  createTask(task: InsertTask): Promise<any>;
+  updateTask(id: string, completed: boolean): Promise<any | null>;
   deleteTask(id: string): Promise<boolean>;
   resetFixedTasks(): Promise<void>;
 }
 
 export class MongoStorage implements IStorage {
+  private initialized: boolean = false;
+
   constructor() {
-    // Connect to MongoDB with better error handling
-    const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://0.0.0.0:27017/todoapp';
+    this.initialize();
+  }
 
-    mongoose.connect(MONGODB_URL, {
-      serverSelectionTimeoutMS: 5000, // 5 seconds timeout
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-    }).then(() => {
+  private async initialize() {
+    try {
+      const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://localhost:27017/todoapp';
+
+      await mongoose.connect(MONGODB_URL, {
+        serverSelectionTimeoutMS: 30000, // 30 seconds
+        connectTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+        maxPoolSize: 10,
+        minPoolSize: 1,
+      });
+
       console.log('✅ Connected to MongoDB successfully');
-    }).catch(err => {
-      console.error('❌ MongoDB connection error:', err);
-      process.exit(1); // Exit if we can't connect to MongoDB
-    });
+      this.initialized = true;
 
-    // Handle connection errors after initial connect
+      // Reset fixed tasks on successful connection
+      await this.resetFixedTasks();
+    } catch (err) {
+      console.error('❌ MongoDB connection error:', err);
+      throw err;
+    }
+
     mongoose.connection.on('error', err => {
       console.error('MongoDB connection error:', err);
+      this.initialized = false;
     });
 
-    // Log when connection is disconnected
     mongoose.connection.on('disconnected', () => {
       console.log('MongoDB disconnected');
+      this.initialized = false;
     });
   }
 
-  async getTasks(): Promise<typeof TaskType[]> {
-    return await TaskType.find().sort({ lastReset: -1 });
+  private async ensureConnection() {
+    if (!this.initialized) {
+      await this.initialize();
+    }
   }
 
-  async createTask(insertTask: InsertTask): Promise<typeof TaskType> {
-    const task = new TaskType({
+  async getTasks(): Promise<any[]> {
+    await this.ensureConnection();
+    return await Task.find().sort({ lastReset: -1 });
+  }
+
+  async createTask(insertTask: InsertTask): Promise<any> {
+    await this.ensureConnection();
+    const task = new Task({
       ...insertTask,
       lastReset: new Date()
     });
     return await task.save();
   }
 
-  async updateTask(id: string, completed: boolean): Promise<typeof TaskType | null> {
-    return await TaskType.findByIdAndUpdate(
+  async updateTask(id: string, completed: boolean): Promise<any | null> {
+    await this.ensureConnection();
+    return await Task.findByIdAndUpdate(
       id,
       { completed },
       { new: true }
@@ -58,13 +80,15 @@ export class MongoStorage implements IStorage {
   }
 
   async deleteTask(id: string): Promise<boolean> {
-    const result = await TaskType.deleteOne({ _id: id });
+    await this.ensureConnection();
+    const result = await Task.deleteOne({ _id: id });
     return result.deletedCount > 0;
   }
 
   async resetFixedTasks(): Promise<void> {
+    await this.ensureConnection();
     const today = startOfDay(new Date());
-    await TaskType.updateMany(
+    await Task.updateMany(
       {
         isFixed: true,
         lastReset: { $lt: today }
