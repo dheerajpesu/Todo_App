@@ -5,10 +5,10 @@ import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Task } from "@shared/schema";
+import type { TaskType } from "@shared/schema";
 
 interface TaskItemProps {
-  task: Task;
+  task: TaskType;
 }
 
 export default function TaskItem({ task }: TaskItemProps) {
@@ -16,7 +16,7 @@ export default function TaskItem({ task }: TaskItemProps) {
 
   const toggleMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("PATCH", `/api/tasks/${task.id}`, {
+      await apiRequest("PATCH", `/api/tasks/${task._id}`, {
         completed: !task.completed,
       });
     },
@@ -34,7 +34,7 @@ export default function TaskItem({ task }: TaskItemProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("DELETE", `/api/tasks/${task.id}`);
+      await apiRequest("DELETE", `/api/tasks/${task._id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -69,7 +69,7 @@ export default function TaskItem({ task }: TaskItemProps) {
           </Badge>
         </div>
       </div>
-      
+
       <Button
         variant="ghost"
         size="icon"

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Task } from "@shared/schema";
+import type { TaskType } from "@shared/schema";
 import TaskItem from "./task-item";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -8,7 +8,7 @@ interface TaskListProps {
 }
 
 export default function TaskList({ filter }: TaskListProps) {
-  const { data: tasks, isLoading } = useQuery<Task[]>({
+  const { data: tasks, isLoading } = useQuery<TaskType[]>({
     queryKey: ["/api/tasks"],
   });
 
@@ -47,7 +47,7 @@ export default function TaskList({ filter }: TaskListProps) {
       <CardContent className="p-4">
         <div className="space-y-4">
           {filteredTasks.map((task) => (
-            <TaskItem key={task.id} task={task} />
+            <TaskItem key={task._id} task={task} />
           ))}
         </div>
       </CardContent>

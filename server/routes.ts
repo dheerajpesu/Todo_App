@@ -7,7 +7,7 @@ import { z } from "zod";
 export function registerRoutes(app: Express): Server {
   // Reset fixed tasks on server start
   storage.resetFixedTasks();
-  
+
   // Set up daily reset at midnight
   setInterval(async () => {
     const now = new Date();
@@ -36,9 +36,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.patch("/api/tasks/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     const completed = req.body.completed;
-    
+
     if (typeof completed !== "boolean") {
       return res.status(400).json({ message: "Invalid completed status" });
     }
@@ -47,18 +47,18 @@ export function registerRoutes(app: Express): Server {
     if (!updated) {
       return res.status(404).json({ message: "Task not found" });
     }
-    
+
     res.json(updated);
   });
 
   app.delete("/api/tasks/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     const deleted = await storage.deleteTask(id);
-    
+
     if (!deleted) {
       return res.status(404).json({ message: "Task not found" });
     }
-    
+
     res.status(204).send();
   });
 
